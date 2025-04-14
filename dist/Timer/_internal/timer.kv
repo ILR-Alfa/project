@@ -1,0 +1,196 @@
+<TimerLayout>:
+    orientation: "vertical"
+    padding: dp(20)
+    spacing: dp(30)
+
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1) if not root.is_dark_mode else (0.1, 0.1, 0.1, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    AnchorLayout:
+        anchor_x: "center"
+        anchor_y: "center"
+
+        BoxLayout:
+            orientation: "vertical"
+            size_hint: None, None
+            size: dp(600), dp(400)
+            spacing: dp(30)
+
+            # Переключатель темы
+            BoxLayout:
+                size_hint: None, None
+                size: dp(350), dp(60)
+                pos_hint: {"x": 0.25, "top": 0.95}
+                orientation: "horizontal"
+                spacing: dp(10)
+                padding: dp(10), 0
+
+                # Солнце
+                RelativeLayout:
+                    size_hint: None, None
+                    size: dp(50), dp(50)
+                    pos_hint: {"center_y": 0.5}
+
+                    Image:
+                        id: sun_image  # ID для доступа из Python
+                        source: root.sun_image  # Обычное солнце
+                        size_hint: None, None
+                        size: dp(50), dp(50)
+                        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+                # Переключатель
+                BoxLayout:
+                    id: theme_switch
+                    size_hint: None, None
+                    size: dp(200), dp(50)
+                    pos_hint: {"center_y": 0.5}
+                    canvas.before:
+                        Color:
+                            rgba: (0.9, 0.9, 0.9, 1) if not root.is_dark_mode else (0.2, 0.2, 0.2, 1)
+                        RoundedRectangle:
+                            pos: self.pos
+                            size: self.size
+                            radius: [25,]
+
+                    # Шарик переключателя
+                    RelativeLayout:
+                        size_hint: None, None
+                        size: dp(50), dp(50)
+                        pos:
+                            self.parent.x + root.slider_pos * (self.parent.width - self.width), \
+                            self.parent.y
+                        canvas.before:
+                            Color:
+                                rgba: (0.6, 0.8, 1, 1) if not root.is_dark_mode else (0.4, 0.4, 0.4, 1)
+                            Ellipse:
+                                pos: 0, 0
+                                size: self.size
+
+                # Луна
+                RelativeLayout:
+                    size_hint: None, None
+                    size: dp(50), dp(50)
+                    pos_hint: {"center_y": 0.5}
+
+                    Image:
+                        id: moon_image  # ID для доступа из Python
+                        source: root.moon_image  # Обычная луна
+                        size_hint: None, None
+                        size: dp(50), dp(50)
+                        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+                # Кнопка переключения темы
+                Button:
+                    size_hint: None, None
+                    size: dp(200), dp(50)
+                    background_color: (0, 0, 0, 0)
+                    on_press: root.toggle_theme()
+
+            # Главный контейнер с таймерами и кнопками
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint: None, None
+                size: dp(600), dp(300)
+                spacing: dp(40)
+
+                # Контейнер для таймеров
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: 0.7, 1
+                    spacing: dp(0)
+
+                    TextInput:
+                        id: main_time_input
+                        text: root.format_time(root.main_time)
+                        font_size: dp(80)
+                        multiline: False
+                        hint_text: "MM:SS"
+                        size_hint: (1, 0.6)
+                        background_color: (1, 1, 1, 0)
+                        foreground_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
+                        cursor_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
+                        on_text_validate: root.update_main_timer(self.text)
+                        on_focus: root.update_main_timer(self.text) if not self.focus else None
+
+                    TextInput:
+                        id: short_time_input
+                        text: root.format_time(root.short_time)
+                        font_size: dp(60)
+                        multiline: False
+                        hint_text: "MM:SS"
+                        size_hint: (1, 1)
+                        pos_hint: {"x": 0.06, "y": 0.7}
+                        background_color: (1, 1, 1, 0)
+                        foreground_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
+                        cursor_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
+                        on_text_validate: root.update_short_timer(self.text)
+                        on_focus: root.update_short_timer(self.text) if not self.focus else None
+
+                # Контейнер для кнопок
+                BoxLayout:
+                    orientation: "vertical"
+                    size_hint: 0.4, 1
+                    pos_hint: {"x": 0.25, "y": 0.4}
+                    spacing: dp(10)
+
+                    Button:
+                        id: start_button
+                        text: "Start"
+                        on_press:
+                            root.start_timers()
+                            root.animate_button(self)
+                        background_normal: ''
+                        background_color: (0, 0, 0, 0)
+                        color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
+                        font_size: dp(16)
+                        size_hint: (1, None)
+                        height: dp(55)
+                        border: (0, 0, 0, 0)
+                        scale_factor: 1
+                        canvas.before:
+                            PushMatrix
+                            Scale:
+                                origin: self.center
+                                x: self.scale_factor
+                                y: self.scale_factor
+                            Color:
+                                rgba: (0.63, 0.8, 0.63, 1) if not root.is_dark_mode else (0.2, 0.3, 0.3, 1)
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [25,]
+                        canvas.after:
+                            PopMatrix
+
+                    Button:
+                        id: pause_button
+                        text: "Pause"
+                        on_press:
+                            root.pause_timers()
+                            root.animate_button(self)
+                        background_normal: ''
+                        background_color: (0, 0, 0, 0)
+                        color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
+                        font_size: dp(16)
+                        size_hint: (1, None)
+                        height: dp(55)
+                        border: (0, 0, 0, 0)
+                        scale_factor: 1
+                        canvas.before:
+                            PushMatrix
+                            Scale:
+                                origin: self.center
+                                x: self.scale_factor
+                                y: self.scale_factor
+                            Color:
+                                rgba: (0.8, 0.8, 0.8, 1) if not root.is_dark_mode else (0.3, 0.3, 0.3, 1)
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [25,]
+                        canvas.after:
+                            PopMatrix
