@@ -4,6 +4,7 @@ from kivy.clock import Clock
 from kivy.properties import NumericProperty, BooleanProperty, StringProperty
 from kivy.animation import Animation
 from kivy.core.audio import SoundLoader
+from kivy.core.window import Window  # Добавьте импорт
 from kivy.lang import Builder
 import os
 import sys
@@ -158,6 +159,10 @@ class TimerLayout(BoxLayout):
 class TimerApp(App):
     def build(self):
         self.icon = resource_path("assets/icon.ico")
+
+        Window.minimum_width = 700
+        Window.minimum_height = 500
+
         return TimerLayout()
 
 
