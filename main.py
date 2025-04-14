@@ -117,21 +117,30 @@ class TimerLayout(BoxLayout):
             self.play_sound()  
 
     def format_time(self, seconds):
-        """ Форматирует время в MM:SS """
-        return f"{seconds // 60:02}:{seconds % 60:02}"
+        """ Улучшенное форматирование с ведущими нулями """
+        minutes, seconds = divmod(seconds, 60)
+        return f"{int(minutes):02d}:{int(seconds):02d}"
 
     def parse_time_input(self, time_str):
-        """ Парсит время из строки в формате MM:SS """
         try:
-            minutes, seconds = map(int, time_str.split(':'))
-            if 0 <= minutes <= 99 and 0 <= seconds <= 59:
-                return minutes * 60 + seconds
+            if ':' not in time_str:
+             minutes = int(time_str)
+             seconds = 0
             else:
-                print("Ошибка: недопустимое значение времени")
-                return None
+             parts = time_str.split(':', 1)
+             minutes = int(parts[0]) if parts[0] else 0
+             seconds = int(parts[1]) if parts[1] else 0
+            
+        # Корректируем секунды больше 59
+            total_seconds = minutes * 60 + seconds
+            minutes = total_seconds // 60
+            seconds = total_seconds % 60
+        
+            return minutes * 60 + seconds
+        
         except ValueError:
-            print("Ошибка: введите время в формате MM:SS")
-            return None
+           print(f"Ошибка: неверный формат времени '{time_str}'")
+           return None
 
     def update_main_timer(self, time_str):
         """ Обновляет основной таймер из строки """
@@ -154,6 +163,17 @@ class TimerLayout(BoxLayout):
         anim = Animation(scale_factor=0.9, duration=0.1) + \
                Animation(scale_factor=1, duration=0.1)
         anim.start(button)
+    
+
+    def on_time_input_focus(self, instance, value):
+       if not value:  # Когда поле теряет фокус
+        if instance == self.ids.main_time_input:
+            self.update_main_timer(instance.text)
+        elif instance == self.ids.short_time_input:
+            self.update_short_timer(instance.text)
+
+
+
 
 
 class TimerApp(App):

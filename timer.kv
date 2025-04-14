@@ -114,7 +114,7 @@
                         foreground_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
                         cursor_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
                         on_text_validate: root.update_main_timer(self.text)
-                        on_focus: root.update_main_timer(self.text) if not self.focus else None
+                        on_focus: root.on_time_input_focus(self, args[1])
 
                     TextInput:
                         id: short_time_input
@@ -128,7 +128,7 @@
                         foreground_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
                         cursor_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
                         on_text_validate: root.update_short_timer(self.text)
-                        on_focus: root.update_short_timer(self.text) if not self.focus else None
+                        on_focus: root.on_time_input_focus(self, args[1])
 
                 # Контейнер для кнопок
                 BoxLayout:
