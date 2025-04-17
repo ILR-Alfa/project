@@ -4,7 +4,7 @@ from kivy.clock import Clock
 from kivy.properties import NumericProperty, BooleanProperty, StringProperty
 from kivy.animation import Animation
 from kivy.core.audio import SoundLoader
-from kivy.core.window import Window  # Добавьте импорт
+from kivy.core.window import Window
 from kivy.lang import Builder
 import os
 import sys
@@ -19,8 +19,10 @@ def resource_path(relative_path):
 
 # Основной макет
 class TimerLayout(BoxLayout):
-    main_time = NumericProperty(50 * 60)  # Основной таймер (в секундах)
-    short_time = NumericProperty(10 * 60)  # Короткий таймер (в секундах)
+    main_time = NumericProperty(50 * 60)  
+    short_time = NumericProperty(10 * 60)  
+    initial_main_time = NumericProperty(50 * 60)  # Значение по умолчанию (неизменяемое)
+    initial_short_time = NumericProperty(10 * 60)  # Значение по умолчанию (неизменяемое)
     is_dark_mode = BooleanProperty(False)  # Темная тема
     slider_pos = NumericProperty(0)  # Позиция шарика переключения темы
     main_timer_running = BooleanProperty(False)
@@ -43,14 +45,12 @@ class TimerLayout(BoxLayout):
         if not self.alarm_sound:
             print(f"Ошибка: файл {sound_path} не загружен")
 
-        
     def play_sound(self):
         """ Воспроизводит звук уведомления """
         if self.alarm_sound:
             self.alarm_sound.play()
         else:
             print("Ошибка: звук не загружен")
-
 
     def update_images(self):
         """ Меняет изображения солнца/луны в зависимости от темы """
@@ -79,8 +79,7 @@ class TimerLayout(BoxLayout):
     def start_timers(self):
         """ Запуск таймеров """
         if not self.main_timer_running and not self.short_timer_running:
-            Clock.schedule_interval(self.update_main_timer_clock, 1)
-            self.main_timer_running = True
+            self.start_main_timer()
 
     def pause_timers(self):
         """ Приостановка таймеров """
@@ -91,6 +90,20 @@ class TimerLayout(BoxLayout):
             Clock.unschedule(self.update_short_timer_clock)
             self.short_timer_running = False
 
+    def start_main_timer(self):
+        """ Запуск основного таймера """
+        if not self.main_timer_running and not self.short_timer_running:
+            self.main_time = self.initial_main_time  # Устанавливаем значение по умолчанию
+            Clock.schedule_interval(self.update_main_timer_clock, 1)
+            self.main_timer_running = True
+
+    def start_short_timer(self):
+        """ Запуск короткого таймера """
+        if not self.short_timer_running and not self.main_timer_running:
+            self.short_time = self.initial_short_time  # Устанавливаем значение по умолчанию
+            Clock.schedule_interval(self.update_short_timer_clock, 1)
+            self.short_timer_running = True
+
     def update_main_timer_clock(self, dt):
         """ Обновление основного таймера """
         if self.main_time > 0:
@@ -98,14 +111,10 @@ class TimerLayout(BoxLayout):
         else:
             self.main_timer_running = False
             Clock.unschedule(self.update_main_timer_clock)
-            self.start_short_timer()
-            self.play_sound() 
-
-    def start_short_timer(self):
-        """ Запуск короткого таймера после завершения основного """
-        if not self.short_timer_running:
-            Clock.schedule_interval(self.update_short_timer_clock, 1)
-            self.short_timer_running = True
+            self.main_time = self.initial_main_time  # Сброс на значение по умолчанию
+            self.play_sound()  # Воспроизведение звука
+            if not self.short_timer_running:
+                self.start_short_timer()
 
     def update_short_timer_clock(self, dt):
         """ Обновление короткого таймера """
@@ -114,7 +123,9 @@ class TimerLayout(BoxLayout):
         else:
             self.short_timer_running = False
             Clock.unschedule(self.update_short_timer_clock)
-            self.play_sound()  
+            self.short_time = self.initial_short_time  # Сброс на значение по умолчанию
+            self.play_sound()  # Воспроизведение звука
+            self.start_main_timer()  # Запуск основного таймера
 
     def format_time(self, seconds):
         """ Улучшенное форматирование с ведущими нулями """
@@ -124,14 +135,14 @@ class TimerLayout(BoxLayout):
     def parse_time_input(self, time_str):
         try:
             if ':' not in time_str:
-             minutes = int(time_str)
-             seconds = 0
+                minutes = int(time_str)
+                seconds = 0
             else:
-             parts = time_str.split(':', 1)
-             minutes = int(parts[0]) if parts[0] else 0
-             seconds = int(parts[1]) if parts[1] else 0
+                parts = time_str.split(':', 1)
+                minutes = int(parts[0]) if parts[0] else 0
+                seconds = int(parts[1]) if parts[1] else 0
             
-        # Корректируем секунды больше 59
+            # Корректируем секунды больше 59
             total_seconds = minutes * 60 + seconds
             minutes = total_seconds // 60
             seconds = total_seconds % 60
@@ -139,21 +150,19 @@ class TimerLayout(BoxLayout):
             return minutes * 60 + seconds
         
         except ValueError:
-           print(f"Ошибка: неверный формат времени '{time_str}'")
-           return None
+            print(f"Ошибка: неверный формат времени '{time_str}'")
+            return None
 
     def update_main_timer(self, time_str):
-        """ Обновляет основной таймер из строки """
         new_time = self.parse_time_input(time_str)
         if new_time is not None:
-            self.main_time = new_time
+            self.main_time = new_time  # Обновляем только текущее значение
         self.ids.main_time_input.text = self.format_time(self.main_time)
 
     def update_short_timer(self, time_str):
-        """ Обновляет короткий таймер из строки """
         new_time = self.parse_time_input(time_str)
         if new_time is not None:
-            self.short_time = new_time
+            self.short_time = new_time  # Обновляем только текущее значение
         self.ids.short_time_input.text = self.format_time(self.short_time)
 
     def animate_button(self, button):
@@ -163,17 +172,13 @@ class TimerLayout(BoxLayout):
         anim = Animation(scale_factor=0.9, duration=0.1) + \
                Animation(scale_factor=1, duration=0.1)
         anim.start(button)
-    
 
     def on_time_input_focus(self, instance, value):
-       if not value:  # Когда поле теряет фокус
-        if instance == self.ids.main_time_input:
-            self.update_main_timer(instance.text)
-        elif instance == self.ids.short_time_input:
-            self.update_short_timer(instance.text)
-
-
-
+        if not value:  # Когда поле теряет фокус
+            if instance == self.ids.main_time_input:
+                self.update_main_timer(instance.text)
+            elif instance == self.ids.short_time_input:
+                self.update_short_timer(instance.text)
 
 
 class TimerApp(App):
