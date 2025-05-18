@@ -107,6 +107,7 @@
                         id: main_time_input
                         text: root.format_time(root.main_time)
                         font_size: dp(80)
+                        width: dp(250)
                         multiline: False
                         hint_text: "MM:SS"
                         size_hint: (1, 0.6)
@@ -115,6 +116,7 @@
                         cursor_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
                         on_text_validate: root.update_main_timer(self.text)
                         on_focus: root.on_time_input_focus(self, args[1])
+                        on_text: root.limit_input_length(*args)
 
                     TextInput:
                         id: short_time_input
@@ -122,6 +124,7 @@
                         font_size: dp(60)
                         multiline: False
                         hint_text: "MM:SS"
+                        width: dp(250)
                         size_hint: (1, 1)
                         pos_hint: {"x": 0.06, "y": 0.7}
                         background_color: (1, 1, 1, 0)
@@ -129,6 +132,7 @@
                         cursor_color: (0.2, 0.2, 0.2, 1) if not root.is_dark_mode else (1, 1, 1, 1)
                         on_text_validate: root.update_short_timer(self.text)
                         on_focus: root.on_time_input_focus(self, args[1])
+                        on_text: root.limit_input_length(*args)
 
                 # Контейнер для кнопок
                 BoxLayout:

@@ -133,37 +133,48 @@ class TimerLayout(BoxLayout):
         return f"{int(minutes):02d}:{int(seconds):02d}"
 
     def parse_time_input(self, time_str):
-        try:
-            if ':' not in time_str:
-                minutes = int(time_str)
-                seconds = 0
-            else:
-                parts = time_str.split(':', 1)
-                minutes = int(parts[0]) if parts[0] else 0
-                seconds = int(parts[1]) if parts[1] else 0
-            
-            # Корректируем секунды больше 59
-            total_seconds = minutes * 60 + seconds
-            minutes = total_seconds // 60
-            seconds = total_seconds % 60
-        
-            return minutes * 60 + seconds
-        
-        except ValueError:
-            print(f"Ошибка: неверный формат времени '{time_str}'")
-            return None
+     try:
+        time_str = time_str.strip()
+        if not time_str:
+            return None  # Пустая строка — возвращаем None
+
+        if ':' not in time_str:
+            minutes = int(time_str)
+            seconds = 0
+        else:
+            parts = time_str.split(':', 1)
+            minutes = int(parts[0]) if parts[0] else 0
+            seconds_str = parts[1]
+
+            if not seconds_str.isdigit():
+                raise ValueError("Секунды должны быть числом")
+
+            seconds = int(seconds_str)
+
+        if seconds < 0 or seconds >= 60:
+            raise ValueError("Секунды должны быть от 0 до 59")
+
+        return minutes * 60 + seconds
+
+     except ValueError as e:
+        print(f"Ошибка парсинга времени: {e}")
+        return None
 
     def update_main_timer(self, time_str):
-        new_time = self.parse_time_input(time_str)
-        if new_time is not None:
-            self.main_time = new_time  # Обновляем только текущее значение
-        self.ids.main_time_input.text = self.format_time(self.main_time)
+     self.pause_timers()  # Останавливаем таймер при редактировании
+     new_time = self.parse_time_input(time_str)
+     if new_time is not None:
+        self.main_time = new_time
+        self.initial_main_time = new_time
+     self.ids.main_time_input.text = self.format_time(self.main_time)
 
     def update_short_timer(self, time_str):
-        new_time = self.parse_time_input(time_str)
-        if new_time is not None:
-            self.short_time = new_time  # Обновляем только текущее значение
-        self.ids.short_time_input.text = self.format_time(self.short_time)
+     self.pause_timers()
+     new_time = self.parse_time_input(time_str)
+     if new_time is not None:
+        self.short_time = new_time
+        self.initial_short_time = new_time
+     self.ids.short_time_input.text = self.format_time(self.short_time)
 
     def animate_button(self, button):
         """ Анимация кнопки """
@@ -174,12 +185,16 @@ class TimerLayout(BoxLayout):
         anim.start(button)
 
     def on_time_input_focus(self, instance, value):
-        if not value:  # Когда поле теряет фокус
-            if instance == self.ids.main_time_input:
-                self.update_main_timer(instance.text)
-            elif instance == self.ids.short_time_input:
-                self.update_short_timer(instance.text)
+     if not value:  # Только при потере фокуса
+        if instance == self.ids.main_time_input:
+            self.update_main_timer(instance.text)
+        elif instance == self.ids.short_time_input:
+            self.update_short_timer(instance.text)
 
+    def limit_input_length(self, instance, value):
+     max_length = 5  # Максимум "99:59" → 5 символов
+     if len(instance.text) > max_length:
+        instance.text = instance.text[:max_length]
 
 class TimerApp(App):
     def build(self):
