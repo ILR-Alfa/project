@@ -192,9 +192,27 @@ class TimerLayout(BoxLayout):
             self.update_short_timer(instance.text)
 
     def limit_input_length(self, instance, value):
-     max_length = 5  # Максимум "99:59" → 5 символов
-     if len(instance.text) > max_length:
-        instance.text = instance.text[:max_length]
+    # Ограничиваем до 5 символов
+     if len(instance.text) > 5:
+        instance.text = instance.text[:5]
+
+    # Если ввели только цифры (без ":")
+     if instance.text.isdigit():
+        return  # Пока ничего не меняем, это может быть корректная минута
+
+    # Если есть ":", то проверяем формат MM:SS
+     if ':' in instance.text:
+        parts = instance.text.split(':', 1)
+        minutes = parts[0]
+        seconds = parts[1]
+
+        # Минуты не должны быть больше 99
+        if minutes.isdigit() and int(minutes) > 99:
+            instance.text = f"99:{seconds[:2]}" if seconds.isdigit() else "99:00"
+
+        # Секунды не должны быть больше 59
+        if seconds.isdigit() and int(seconds) > 59:
+            instance.text = f"{minutes[:2]}:59"
 
 class TimerApp(App):
     def build(self):
